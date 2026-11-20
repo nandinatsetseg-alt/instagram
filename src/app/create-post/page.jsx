@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import { useRouter } from "next/navigation";
 import { ImagePlus, X } from "lucide-react";
-
+import { formatDistanceToNow } from "date-fns";
 export default function Home() {
   const [file, setFile] = useState(null);
   const [caption, setCaption] = useState("");
