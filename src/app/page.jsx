@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 
 const Page = () => {
     const router = useRouter();
-    const supabase = supabaseClient();
+    const supabase = supabaseClient;
 
     const [userInfo, setUserInfo] = useState({
         email: "",
