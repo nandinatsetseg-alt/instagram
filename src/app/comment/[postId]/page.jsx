@@ -12,6 +12,7 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "@/components/ui/toast";
 
 const Page = () => {
   const params = useParams();
@@ -20,26 +21,41 @@ const Page = () => {
   const [comment, setComment] = useState("");
   const [postComments, setPostComments] = useState([]);
 
+  
+  const getPostComments = async () => {
+    const response = await supabase
+    .from("comments")
+    .select("*, profile(username, profileimage)")
+    .eq("postId", postId);
+    
+    setPostComments(response.data);
+  };
+  
+  useEffect(() => {
+    getPostComments();
+  }, []);
+  
   const addComment = async () => {
     const response = await supabase.from("comments").insert({
       postId: postId,
       content: comment,
     });
+    if (response.success) {
+      await getPostComments();
+      toast.add({
+        type: "success",
+        description: "Comment added successfully.",
+      });
+      setComment("");
+    }
+      else {
+        toast.add({
+          type: "error",
+          description: "Failed to add comment.",
+        });
+    }
     console.log(response);
   };
-
-  const getPostComments = async () => {
-    const response = await supabase
-      .from("comments")
-      .select("*, profile(username, profileimage)")
-      .eq("postId", postId);
-
-    setPostComments(response.data);
-  };
-
-  useEffect(() => {
-    getPostComments();
-  }, []);
 
   return (
     <div className="min-h-screen bg-[#fafafa] flex justify-center items-start py-10 px-4">

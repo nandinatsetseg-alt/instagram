@@ -19,7 +19,7 @@ export default function Home() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-
+  const [userId, setUserId] = useState(null);
   useEffect(() => {
     const getPosts = async () => {
       try {
@@ -28,7 +28,7 @@ export default function Home() {
           profile (
             username,
             profileimage
-          ), comments(count)
+          ), comments(count), like( userId)
         `);
 
         if (error) {
@@ -46,184 +46,193 @@ export default function Home() {
 
     getPosts();
   }, []);
-
+  const getUser = async () => {
+    const response = await supabase.auth.getUser();
+    setUserId(response.data.user.id);
+  };
+  useEffect(() => {
+    getUser();
+  }, []);
   const redirectCommentPage = (postId) => {
     router.push(`/comment/${postId}`);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fafafa] flex justify-center items-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-gray-200 border-t-[#0095f6] rounded-full animate-spin" />
-          <p className="text-sm text-gray-500">Loading your feed...</p>
-        </div>
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
+        <div className="w-7 h-7 rounded-full border-2 border-zinc-300 border-t-zinc-900 animate-spin" />
       </div>
     );
   }
-
+  const toggleLike = async (postId, likedUsers) => {
+    const userIds = Object.values(likedUsers).map((like) => like.userId);
+    if (userIds.includes(userId)) {
+      const response = await supabase
+        .from("like")
+        .delete()
+        .eq("postId", postId)
+        .eq("userId", userId);
+      console.log(response);
+      return;
+    }else {
+      const response = await supabase.from("like").insert({
+        postId: postId,
+        userId: userId,
+      });
+      console.log(response);
+    }
+      
+  }
   return (
-    <div className="min-h-screen bg-[#fafafa] py-8 px-4">
-      <div className="max-w-[630px] mx-auto">
-        {/* Instagram Header */}
-        <div className="flex items-center justify-between mb-8 px-2">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 italic">
+    <div className="min-h-screen bg-zinc-50 text-zinc-900">
+      <div className="max-w-md mx-auto bg-white min-h-screen shadow-sm border-x border-zinc-200/80">
+        {/* Header */}
+        <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-white border-b border-zinc-200/70">
+          <span className="text-xl font-bold tracking-tight italic">
             Instagram
-          </h1>
-
-          <div className="flex items-center gap-5">
+          </span>
+          <div className="flex items-center gap-4">
             <Heart
-              size={25}
-              className="text-gray-800 cursor-pointer hover:text-gray-500 transition"
+              size={22}
+              className="cursor-pointer hover:text-zinc-500 transition-colors"
             />
             <Send
-              size={24}
-              className="text-gray-800 cursor-pointer hover:text-gray-500 transition"
+              size={22}
+              className="cursor-pointer hover:text-zinc-500 transition-colors"
             />
           </div>
         </div>
 
-        {/* Stories Section */}
-        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-6">
-          <div className="flex gap-5 overflow-x-auto">
-            {["Your story", "Explore", "Friends", "Moments"].map(
-              (story, index) => (
-                <div
-                  key={story}
-                  className="flex flex-col items-center gap-2 shrink-0"
-                >
-                  <div className="w-[62px] h-[62px] rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600">
-                    <div className="w-full h-full rounded-full bg-white p-[2px]">
-                      <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-semibold">
-                        {story === "Your story" ? "+" : story[0]}
-                      </div>
-                    </div>
-                  </div>
-
-                  <span className="text-xs text-gray-600">{story}</span>
+        {/* Stories */}
+        <div className="flex items-center gap-3.5 px-4 py-3.5 overflow-x-auto border-b border-zinc-200/70">
+          {["Your story", "Explore", "Friends", "Moments"].map((story) => (
+            <div
+              key={story}
+              className="flex flex-col items-center gap-1 shrink-0 cursor-pointer"
+            >
+              <div className="p-[2px] rounded-full bg-gradient-to-tr from-amber-400 via-rose-500 to-fuchsia-600">
+                <div className="w-14 h-14 rounded-full bg-zinc-100 border-2 border-white flex items-center justify-center text-sm font-semibold text-zinc-700">
+                  {story === "Your story" ? "+" : story[0]}
                 </div>
-              ),
-            )}
-          </div>
+              </div>
+              <span className="text-[11px] text-zinc-600">{story}</span>
+            </div>
+          ))}
         </div>
 
-        {/* Posts */}
-        <div className="space-y-6">
-          {posts.length === 0 ? (
-            <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
-              <div className="w-16 h-16 rounded-full border-2 border-gray-800 flex items-center justify-center mx-auto mb-4">
-                <Heart size={30} />
-              </div>
-
-              <h2 className="text-xl font-semibold text-gray-900">
-                No posts yet
-              </h2>
-
-              <p className="text-sm text-gray-400 mt-2">
-                When people share photos, you'll see them here.
-              </p>
+        {/* Feed */}
+        {posts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
+            <div className="w-14 h-14 rounded-full border border-zinc-300 flex items-center justify-center mb-3">
+              <Heart size={24} className="text-zinc-700" />
             </div>
-          ) : (
-            posts.map((post) => (
-              <div
-                key={post.id}
-                className="bg-white border border-gray-200 rounded-xl overflow-hidden"
-              >
-                {/* Post Header */}
-                <div className="flex items-center justify-between px-4 py-3">
-                  <div className="flex items-center gap-3">
+            <h2 className="text-base font-semibold">No posts yet</h2>
+            <p className="text-xs text-zinc-500 mt-1">
+              When people share photos, you&apos;ll see them here.
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-zinc-200/70">
+            {posts.map((post) => (
+              <div key={post.id} className="bg-white">
+                {/* Author Row */}
+                <div className="flex items-center justify-between px-3.5 py-2.5">
+                  <div className="flex items-center gap-2.5">
                     <Avatar
-                      className="w-10 h-10 cursor-pointer"
+                      className="w-8 h-8 cursor-pointer ring-1 ring-zinc-200"
                       onClick={() => router.push("/profile")}
                     >
                       <AvatarImage src={post.profile?.profileimage} />
-
-                      <AvatarFallback className="bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white font-semibold">
+                      <AvatarFallback className="bg-zinc-900 text-white text-xs font-medium">
                         {post.profile?.username?.slice(0, 2) || "U"}
                       </AvatarFallback>
                     </Avatar>
-
-                    <div>
+                    <div className="leading-tight">
                       <p
                         onClick={() => router.push("/profile")}
-                        className="text-sm font-semibold text-gray-900 cursor-pointer hover:text-gray-500"
+                        className="text-xs font-semibold cursor-pointer hover:text-zinc-600"
                       >
                         {post.profile?.username || "Unknown"}
                       </p>
-
-                      <p className="text-xs text-gray-400">
-                        {post.created_at &&
-                          formatDistanceToNow(new Date(post.created_at), {
+                      {post.created_at && (
+                        <p className="text-[11px] text-zinc-400">
+                          {formatDistanceToNow(new Date(post.created_at), {
                             addSuffix: true,
                           })}
-                      </p>
+                        </p>
+                      )}
                     </div>
                   </div>
-
                   <MoreHorizontal
-                    size={23}
-                    className="text-gray-700 cursor-pointer"
+                    size={18}
+                    className="text-zinc-600 cursor-pointer"
                   />
                 </div>
 
-                {/* Post Image */}
-                <div className="w-full bg-gray-50">
+                {/* Image */}
+                <div className="w-full bg-zinc-100">
                   <img
                     src={post.imageUrl}
                     alt={post.caption || "Post image"}
-                    className="w-full max-h-[650px] object-contain"
+                    className="w-full max-h-[520px] object-cover"
                   />
                 </div>
 
-                {/* Post Actions */}
-                <div className="px-4 pt-3">
+                {/* Actions & Meta */}
+                <div className="px-3.5 py-2.5 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-5">
-                      <Heart
-                        size={25}
-                        className="text-gray-800 cursor-pointer hover:text-gray-400 transition"
-                      />
-
-                      <MessageCircle
-                        size={25}
-                        onClick={() => redirectCommentPage(post.id)}
-                        className="text-gray-800 cursor-pointer hover:text-gray-400 transition"
-                      />
-
+                    <div className="flex items-center gap-3.5">
+                      
+                      <div className="flex items-center gap-1">
+                        <Heart
+                          size={22}
+                          onClick={() => toggleLike(post.id, post.like)}
+                          className="cursor-pointer hover:text-zinc-500 transition-colors"
+                        />
+                        <span className="text-xs font-medium text-zinc-700">
+                          {post.like.length} {post.like.length === 1 ? "like" : "likes"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MessageCircle
+                          size={22}
+                          onClick={() => redirectCommentPage(post.id)}
+                          className="cursor-pointer hover:text-zinc-500 transition-colors"
+                        />
+                        <span className="text-xs font-medium text-zinc-700">
+                          {post.comments[0].count} {post.comments[0].count === 1 ? "comment" : "comments"}
+                        </span>
+                      </div>
                       <Send
-                        size={24}
-                        className="text-gray-800 cursor-pointer hover:text-gray-400 transition"
+                        size={21}
+                        className="cursor-pointer hover:text-zinc-500 transition-colors"
                       />
                     </div>
-
                     <Bookmark
-                      size={24}
-                      className="text-gray-800 cursor-pointer hover:text-gray-400 transition"
+                      size={22}
+                      className="cursor-pointer hover:text-zinc-500 transition-colors"
                     />
                   </div>
 
-                  {/* Caption */}
-                  <div className="py-3">
-                    <p className="text-sm text-gray-800 leading-relaxed break-words">
-                      <span className="font-semibold mr-2">
-                        {post.profile?.username || "Unknown"}
-                      </span>
+                  <p className="text-xs text-zinc-800 leading-normal break-words">
+                    <span className="font-semibold mr-1.5">
+                      {post.profile?.username || "Unknown"}
+                    </span>
+                    {post.caption}
+                  </p>
 
-                      {post.caption}
-                    </p>
-
-                    <button
-                      onClick={() => redirectCommentPage(post.id)}
-                      className="text-sm text-gray-400 mt-2 hover:text-gray-600"
-                    >
-                      View comments
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => redirectCommentPage(post.id)}
+                    className="text-xs text-zinc-400 hover:text-zinc-600 transition-colors"
+                  >
+                    View comments
+                  </button>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
