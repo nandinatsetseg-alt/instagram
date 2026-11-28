@@ -28,7 +28,7 @@ export default function Home() {
           profile (
             username,
             profileimage
-          )
+          ), comments(count)
         `);
 
         if (error) {

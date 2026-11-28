@@ -8,6 +8,7 @@ import { toast } from "@/components/ui/toast";
 import { useRouter } from "next/navigation";
 import { ImagePlus, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+const supabase = supabaseClient;
 export default function Home() {
   const [file, setFile] = useState(null);
   const [caption, setCaption] = useState("");
@@ -15,7 +16,6 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-  const supabase = supabaseClient();
 
   // Select image
   const handleFile = (e) => {

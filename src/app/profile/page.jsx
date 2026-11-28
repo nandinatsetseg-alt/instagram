@@ -3,9 +3,9 @@
 import { supabaseClient } from "@/supabase";
 import { useEffect, useState } from "react";
 
+const supabase = supabaseClient;
 export default function Home() {
     const [posts, setPosts] = useState([]);
-    const supabase = supabaseClient();
 
     const getPosts = async () => {
         const response = await supabase

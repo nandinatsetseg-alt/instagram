@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { supabaseClient } from "@/supabase";
 import { toast } from "@/components/ui/toast";
 import { useRouter } from "next/navigation"; 
+const supabase = supabaseClient;
 const Page = () => {
   const [showPassword, setShowPassword] = useState(false);
-    const supabase = supabaseClient();
   const router = useRouter();
     const [userInfo, setUserInfo] = useState({
         email: "",
